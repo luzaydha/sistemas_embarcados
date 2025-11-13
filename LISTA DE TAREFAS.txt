@@ -1,0 +1,40 @@
+======= LISTA DE TAREFAS ========
+
+
+py -m pip install Flask requests
+
+pip install Flask flask-cors
+  
+python app.py --> add "todo.db" banco de dados
+
+
+pip install Flask flask-socketio psutil ---> ativação de monitor de sitema
+
+
+
+========== AMBIENTE VIRTUAL ==========
+
+Quando for rodar qualquer teste de em Python criar um ambiente virtual.
+
+py -m venv venv
+
+
+.\venv\Scripts\Activate
+
+caso powershell bloqueie: Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+
+
+
+======= PARAR ======
+
+ctrl+c
+
+
+====== MONITOR ======
+
+pip install eventlet
+
+1.maquina virtual
+2.caso powershwll bloqueie 
+4.pip install flask-socketio psutil eventlet
+3.pytohn app.py
