@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Tarefas</title>
+    <!-- CSS Embutido para simplicidade -->
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            max-width: 600px;
+            width: 100%;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            padding: 24px;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+        }
+        /* Estilos do Formulário */
+        #form-tarefa {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        #input-tarefa {
+            flex-grow: 1;
+            padding: 12px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 6px 0 0 6px;
+            transition: border-color 0.2s;
+        }
+        #input-tarefa:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        #form-tarefa button {
+            padding: 12px 20px;
+            font-size: 16px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 0 6px 6px 0;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        #form-tarefa button:hover {
+            background-color: #2980b9;
+        }
+        /* Estilos da Lista */
+        #lista-tarefas {
+            list-style: none;
+            padding: 0;
+        }
+        #lista-tarefas li {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.2s;
+        }
+        #lista-tarefas li:last-child {
+            border-bottom: none;
+        }
+        .tarefa-item {
+            display: flex;
+            align-items: center;
+            flex-grow: 1;
+            font-size: 16px;
+        }
+        .tarefa-item input[type="checkbox"] {
+            margin-right: 12px;
+            /* Estilos customizados para o checkbox */
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        .tarefa-item span.concluida {
+            text-decoration: line-through;
+            color: #95a5a6;
+        }
+        .delete-btn {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            font-size: 12px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .delete-btn:hover {
+            background-color: #c0392b;
+        }
+        #mensagem-loading {
+            text-align: center;
+            color: #7f8c8d;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Minha Lista de Tarefas</h1>
+        
+        <!-- Formulário para adicionar novas tarefas -->
+        <form id="form-tarefa">
+            <input type="text" id="input-tarefa" placeholder="O que precisa ser feito?" required>
+            <button type="submit">Adicionar</button>
+        </form>
+        
+        <!-- Lista onde as tarefas serão exibidas -->
+        <ul id="lista-tarefas">
+            <!-- As tarefas do back-end aparecerão aqui -->
+        </ul>
+        <p id="mensagem-loading">Carregando tarefas...</p>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const API_URL = 'http://localhost:5000/tarefas';
+
+            const formTarefa = document.getElementById('form-tarefa');
+            const inputTarefa = document.getElementById('input-tarefa');
+            const listaTarefas = document.getElementById('lista-tarefas');
+            const msgLoading = document.getElementById('mensagem-loading');
+
+            // --- FUNÇÕES DE RENDERIZAÇÃO ---
+
+            /**
+             * Cria e adiciona um item de tarefa (<li>) na lista do DOM.
+             */
+            function renderizarTarefa(tarefa) {
+                const li = document.createElement('li');
+                li.setAttribute('data-id', tarefa.id);
+
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'tarefa-item';
+
+                // Checkbox para marcar como concluída
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.checked = tarefa.concluida;
+                checkbox.addEventListener('change', () => toggleConcluida(tarefa.id, checkbox.checked, span));
+
+                // Texto da tarefa
+                const span = document.createElement('span');
+                span.textContent = tarefa.descricao;
+                if (tarefa.concluida) {
+                    span.className = 'concluida';
+                }
+
+                // Botão de deletar
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'delete-btn';
+                deleteBtn.textContent = 'X';
+                deleteBtn.addEventListener('click', () => deletarTarefa(tarefa.id, li));
+
+                // Monta o <li>
+                itemDiv.appendChild(checkbox);
+                itemDiv.appendChild(span);
+                li.appendChild(itemDiv);
+                li.appendChild(deleteBtn);
+                
+                listaTarefas.appendChild(li);
+            }
+
+            // --- FUNÇÕES DE API (CRUD) ---
+
+            /**
+             * R (READ): Busca todas as tarefas no servidor e as renderiza.
+             */
+            async function carregarTarefas() {
+                try {
+                    const response = await fetch(API_URL);
+                    if (!response.ok) throw new Error('Falha ao carregar tarefas.');
+                    
+                    const tarefas = await response.json();
+                    
+                    listaTarefas.innerHTML = ''; // Limpa a lista atual
+                    
+                    if (tarefas.length === 0) {
+                        msgLoading.textContent = 'Nenhuma tarefa encontrada. Adicione uma!';
+                    } else {
+                        tarefas.forEach(renderizarTarefa);
+                        msgLoading.style.display = 'none';
+                    }
+                } catch (error) {
+                    msgLoading.textContent = error.message;
+                    console.error('Erro (GET):', error);
+                }
+            }
+
+            /**
+             * C (CREATE): Adiciona uma nova tarefa no servidor.
+             */
+            async function adicionarTarefa(descricao) {
+                try {
+                    const response = await fetch(API_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ descricao: descricao })
+                    });
+                    if (!response.ok) throw new Error('Falha ao adicionar tarefa.');
+                    
+                    const novaTarefa = await response.json();
+                    renderizarTarefa(novaTarefa); // Adiciona a nova tarefa no DOM
+                    
+                    // Esconde a mensagem "Nenhuma tarefa" se for o caso
+                    if (listaTarefas.children.length > 0) {
+                        msgLoading.style.display = 'none';
+                    }
+
+                } catch (error) {
+                    alert('Erro (POST): ' + error.message);
+                }
+            }
+
+            /**
+             * U (UPDATE): Atualiza o status (concluída/não concluída) de uma tarefa.
+             */
+            async function toggleConcluida(id, concluida, spanElemento) {
+                try {
+                    const response = await fetch(`${API_URL}/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ concluida: concluida })
+                    });
+                    if (!response.ok) throw new Error('Falha ao atualizar tarefa.');
+                    
+                    // Atualiza o estilo no DOM
+                    spanElemento.classList.toggle('concluida', concluida);
+
+                } catch (error) {
+                    alert('Erro (PUT): ' + error.message);
+                }
+            }
+
+            /**
+             * D (DELETE): Remove uma tarefa do servidor e do DOM.
+             */
+            async function deletarTarefa(id, liElemento) {
+                try {
+                    const response = await fetch(`${API_URL}/${id}`, {
+                        method: 'DELETE'
+                    });
+                    if (!response.ok) throw new Error('Falha ao deletar tarefa.');
+                    
+                    // Remove do DOM
+                    liElemento.remove();
+
+                    // Mostra a mensagem se a lista ficar vazia
+                    if (listaTarefas.children.length === 0) {
+                        msgLoading.textContent = 'Nenhuma tarefa encontrada. Adicione uma!';
+                        msgLoading.style.display = 'block';
+                    }
+
+                } catch (error) {
+                    alert('Erro (DELETE): ' + error.message);
+                }
+            }
+
+            // --- EVENT LISTENERS INICIAIS ---
+
+            // Listener do formulário de adição
+            formTarefa.addEventListener('submit', (e) => {
+                e.preventDefault(); // Impede o recarregamento da página
+                const descricao = inputTarefa.value.trim();
+                
+                if (descricao) {
+                    adicionarTarefa(descricao);
+                    inputTarefa.value = ''; // Limpa o campo
+                    inputTarefa.focus();
+                }
+            });
+
+            // Carrega as tarefas iniciais assim que a página é carregada
+            carregarTarefas();
+        });
+    </script>
+</body>
+</html>
