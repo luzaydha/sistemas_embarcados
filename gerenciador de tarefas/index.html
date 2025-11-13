@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitor de Sistema em Tempo Real</title>
+    <!-- 1. Importa a biblioteca JavaScript do Socket.IO (do cliente) -->
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #121212; /* Fundo escuro */
+            color: #e0e0e0; /* Texto claro */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .dashboard {
+            width: 100%;
+            max-width: 700px;
+            background-color: #1e1e1e; /* Cor do "cartão" */
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        h1 {
+            text-align: center;
+            margin-top: 0;
+            color: #ffffff;
+            border-bottom: 2px solid #3498db; /* Azul */
+            padding-bottom: 10px;
+        }
+        .monitor-item {
+            margin-bottom: 20px;
+        }
+        .monitor-item label {
+            font-size: 1.2em;
+            font-weight: 500;
+            display: block;
+            margin-bottom: 8px;
+        }
+        /* A "caixa" cinza da barra de progresso */
+        .progress-bar-container {
+            width: 100%;
+            height: 30px;
+            background-color: #333;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        /* A barra colorida interna */
+        .progress-bar {
+            height: 100%;
+            width: 0%; /* Começa em 0 */
+            background-color: #3498db; /* Azul */
+            border-radius: 8px;
+            /* Transição suave ao atualizar a largura */
+            transition: width 0.3s ease-in-out, background-color 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+            box-sizing: border-box;
+        }
+        .progress-bar span {
+            font-size: 14px;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        
+        /* Muda a cor da barra quando o uso for alto */
+        .progress-bar.high {
+            background-color: #e74c3c; /* Vermelho */
+        }
+        .progress-bar.medium {
+            background-color: #f39c12; /* Laranja */
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard">
+        <h1>Painel de Monitoramento</h1>
+        
+        <!-- Monitor de CPU -->
+        <div class="monitor-item">
+            <label for="cpu">Uso de CPU</label>
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="cpu-bar">
+                    <span id="cpu-percent">0%</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Monitor de Memória -->
+        <div class="monitor-item">
+            <label for="mem">Uso de Memória</label>
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="mem-bar">
+                    <span id="mem-percent">0%</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Monitor de Disco (Principal) -->
+        <div class="monitor-item">
+            <label for="disk">Uso de Disco (C: ou /)</label>
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="disk-bar">
+                    <span id="disk-percent">0%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 2. Conecta ao servidor WebSocket (rodando em http://localhost:5000)
+        // O 'io()' vem da biblioteca que importamos no <head>
+        const socket = io('http://localhost:5000');
+
+        // Seleciona os elementos do HTML que vamos atualizar
+        const cpuPercent = document.getElementById('cpu-percent');
+        const cpuBar = document.getElementById('cpu-bar');
+        const memPercent = document.getElementById('mem-percent');
+        const memBar = document.getElementById('mem-bar');
+        const diskPercent = document.getElementById('disk-percent');
+        const diskBar = document.getElementById('disk-bar');
+
+        // Função auxiliar para mudar a cor da barra
+        function updateBarColor(barElement, value) {
+            barElement.classList.remove('high', 'medium');
+            if (value > 90) {
+                barElement.classList.add('high');
+            } else if (value > 70) {
+                barElement.classList.add('medium');
+            }
+        }
+
+        // 3. Escuta pelo evento 'connect' (bom para saber se conectou)
+        socket.on('connect', () => {
+            console.log('Conectado ao servidor de monitoramento!');
+        });
+
+        // 4. Escuta pelo evento 'system_update' (O NOME TEM QUE SER O MESMO DO SERVIDOR)
+        socket.on('system_update', (data) => {
+            // 'data' é o objeto {'cpu': ..., 'mem': ..., 'disk': ...}
+            // console.log(data); // Descomente para ver os dados no console
+            
+            // --- Atualiza os dados da CPU ---
+            let cpu = data.cpu.toFixed(1); // Arredonda para 1 casa decimal
+            cpuPercent.textContent = `${cpu}%`;
+            cpuBar.style.width = `${cpu}%`;
+            updateBarColor(cpuBar, cpu);
+
+            // --- Atualiza os dados da Memória ---
+            let mem = data.mem.toFixed(1);
+            memPercent.textContent = `${mem}%`;
+            memBar.style.width = `${mem}%`;
+            updateBarColor(memBar, mem);
+
+            // --- Atualiza os dados do Disco ---
+            let disk = data.disk.toFixed(1);
+            diskPercent.textContent = `${disk}%`;
+            diskBar.style.width = `${disk}%`;
+            updateBarColor(diskBar, disk);
+        });
+
+        // 5. Escuta por erros de conexão
+        socket.on('disconnect', () => {
+            console.log('Desconectado do servidor.');
+            cpuPercent.textContent = '---';
+            memPercent.textContent = '---';
+            diskPercent.textContent = '---';
+        });
+    </script>
+</body>
+</html>
