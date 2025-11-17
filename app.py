@@ -1,11 +1,10 @@
 import sqlite3
 from flask import Flask, request, jsonify
-from flask_cors import CORS # Importar o CORS
+from flask_cors import CORS 
 
-# --- Configuração Inicial ---
+
 app = Flask(__name__)
-# Habilitar CORS para que o index.html possa fazer requisições
-# para este servidor (que roda em http://localhost:5000)
+
 CORS(app) 
 
 DB_NAME = 'todo.db'
@@ -15,7 +14,6 @@ DB_NAME = 'todo.db'
 def get_db_connection():
     """Cria uma conexão com o banco de dados."""
     conn = sqlite3.connect(DB_NAME)
-    # Retorna linhas como dicionários (mais fácil de converter para JSON)
     conn.row_factory = sqlite3.Row 
     return conn
 
@@ -32,7 +30,7 @@ def init_db():
     conn.commit()
     conn.close()
 
-# --- Rotas da API (CRUD) ---
+
 
 @app.route('/tarefas', methods=['GET'])
 def get_tarefas():
@@ -42,10 +40,10 @@ def get_tarefas():
     tarefas = cursor.fetchall()
     conn.close()
     
-    # Converte o resultado (sqlite3.Row) para uma lista de dicionários
+
     lista_tarefas = [dict(tarefa) for tarefa in tarefas]
     
-    # Converte o booleano (0/1) para (False/True) para o JSON
+ 
     for tarefa in lista_tarefas:
         tarefa['concluida'] = bool(tarefa['concluida'])
         
@@ -63,19 +61,19 @@ def add_tarefa():
     
     conn = get_db_connection()
     cursor = conn.execute('INSERT INTO tarefas (descricao, concluida) VALUES (?, ?)',
-                          (descricao, 0)) # Novas tarefas começam como não concluídas
+                          (descricao, 0)) 
     conn.commit()
     
     nova_id = cursor.lastrowid
     
-    # Retorna a tarefa recém-criada
+    
     nova_tarefa = conn.execute('SELECT * FROM tarefas WHERE id = ?', (nova_id,)).fetchone()
     conn.close()
 
     tarefa_dict = dict(nova_tarefa)
     tarefa_dict['concluida'] = bool(tarefa_dict['concluida'])
     
-    return jsonify(tarefa_dict), 201 # 201 Created
+    return jsonify(tarefa_dict), 201 
 
 @app.route('/tarefas/<int:id>', methods=['PUT'])
 def update_tarefa(id):
@@ -86,7 +84,7 @@ def update_tarefa(id):
         return jsonify({'erro': 'Status "concluida" é obrigatório'}), 400
     
     concluida = data['concluida']
-    # Converte o booleano do JSON (True/False) para Inteiro do SQLite (1/0)
+    
     concluida_int = 1 if concluida else 0 
     
     conn = get_db_connection()
@@ -98,7 +96,7 @@ def update_tarefa(id):
         conn.close()
         return jsonify({'erro': 'Tarefa não encontrada'}), 404
         
-    # Retorna a tarefa atualizada
+   
     tarefa_atualizada = conn.execute('SELECT * FROM tarefas WHERE id = ?', (id,)).fetchone()
     conn.close()
 
@@ -120,7 +118,7 @@ def delete_tarefa(id):
 
     return jsonify({'mensagem': 'Tarefa deletada com sucesso'})
 
-# --- Inicialização ---
+
 if __name__ == '__main__':
-    init_db() # Garante que a tabela exista antes de rodar o app
+    init_db() 
     app.run(debug=True, port=5000)

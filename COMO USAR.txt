@@ -1,0 +1,23 @@
+========== AMBIENTE VIRTUAL ==========
+
+Quando for rodar qualquer teste de em Python criar um ambiente virtual.
+
+py -m venv venv
+
+.\.venv\Scripts\Activate
+
+caso powershell bloqueie: Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+
+DESATIVADOR DE AMBIENTE VIRTUAL: "deactivate"
+
+======= LISTA DE TAREFAS ========
+
+pip install Flask flask-cors
+  
+python app.py --> add "todo.db" banco de dados
+
+======= PARAR ======
+
+ctrl+c
+
+

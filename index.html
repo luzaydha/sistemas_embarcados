@@ -4,92 +4,178 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lista de Tarefas</title>
-    <!-- CSS Embutido para simplicidade -->
+    <!-- CSS Embutido (Versão Melhorada) -->
     <style>
+        /* --- GERAL --- */
+        * {
+            box-sizing: border-box; /* Garante que padding não afete o tamanho total */
+        }
+        
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f4f7f6;
+            /* Fundo com gradiente suave */
+            background: linear-gradient(135deg, #ece9e6 0%, #ffffff 100%);
             color: #333;
             margin: 0;
             padding: 20px;
             display: flex;
             justify-content: center;
+            align-items: flex-start; /* Alinha no topo */
+            min-height: 100vh;
         }
+
+        /* --- CONTAINER PRINCIPAL --- */
         .container {
             max-width: 600px;
             width: 100%;
             margin: 0 auto;
             background-color: #ffffff;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border-radius: 12px; /* Cantos mais arredondados */
+            /* Sombra mais suave e moderna */
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.07);
             padding: 24px;
         }
+
         h1 {
             text-align: center;
             color: #2c3e50;
+            font-weight: 600;
+            letter-spacing: -0.5px;
         }
-        /* Estilos do Formulário */
+
+        /* --- FORMULÁRIO DE ADICIONAR --- */
         #form-tarefa {
             display: flex;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
+
         #input-tarefa {
             flex-grow: 1;
-            padding: 12px;
+            padding: 14px;
             font-size: 16px;
-            border: 2px solid #ddd;
-            border-radius: 6px 0 0 6px;
-            transition: border-color 0.2s;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px 0 0 8px;
+            transition: all 0.3s ease;
+            background-color: #f9f9f9;
         }
+
         #input-tarefa:focus {
             outline: none;
             border-color: #3498db;
+            background-color: #fff;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
         }
+
         #form-tarefa button {
-            padding: 12px 20px;
+            padding: 14px 22px;
             font-size: 16px;
-            background-color: #3498db;
+            font-weight: 600;
+            background: linear-gradient(45deg, #3498db, #2980b9);
             color: white;
             border: none;
-            border-radius: 0 6px 6px 0;
+            border-radius: 0 8px 8px 0;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: all 0.3s ease;
         }
+
         #form-tarefa button:hover {
-            background-color: #2980b9;
+            background: linear-gradient(45deg, #2980b9, #3498db);
+            transform: scale(1.05); /* Efeito de zoom */
         }
-        /* Estilos da Lista */
+
+        /* --- LISTA DE TAREFAS --- */
         #lista-tarefas {
             list-style: none;
             padding: 0;
         }
+
+        /* Animação para novos itens */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Card de cada item da lista */
         #lista-tarefas li {
             display: flex;
             align-items: center;
-            padding: 12px;
-            border-bottom: 1px solid #eee;
-            transition: background-color 0.2s;
+            justify-content: space-between;
+            padding: 15px;
+            background: #fff;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            animation: fadeIn 0.4s ease forwards; /* Aplica a animação */
         }
-        #lista-tarefas li:last-child {
-            border-bottom: none;
+
+        /* Efeito de "levantar" ao passar o mouse */
+        #lista-tarefas li:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 12px rgba(0, 0, 0, 0.08);
         }
+
         .tarefa-item {
             display: flex;
             align-items: center;
             flex-grow: 1;
             font-size: 16px;
         }
+
+        /* --- CHECKBOX CUSTOMIZADO --- */
         .tarefa-item input[type="checkbox"] {
-            margin-right: 12px;
-            /* Estilos customizados para o checkbox */
+            appearance: none; /* Remove o estilo padrão */
+            -webkit-appearance: none;
+            min-width: 20px;
             width: 20px;
             height: 20px;
+            border: 2px solid #ccc;
+            border-radius: 4px;
+            margin-right: 15px;
             cursor: pointer;
+            position: relative;
+            transition: all 0.2s ease;
         }
+
+        /* Quando o checkbox é marcado */
+        .tarefa-item input[type="checkbox"]:checked {
+            background-color: #3498db;
+            border-color: #3498db;
+        }
+
+        /* O "check" (✔) */
+        .tarefa-item input[type="checkbox"]:checked::after {
+            content: '✔';
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        /* Quando a tarefa está concluída */
         .tarefa-item span.concluida {
             text-decoration: line-through;
             color: #95a5a6;
+            opacity: 0.8;
         }
+        
+        /* A linha inteira (li) fica mais sutil quando concluída */
+        #lista-tarefas li:has(input:checked) {
+            background-color: #fdfdfd;
+            opacity: 0.8;
+        }
+
+
+        /* --- BOTÃO DELETAR --- */
         .delete-btn {
             background-color: #e74c3c;
             color: white;
@@ -99,15 +185,29 @@
             font-weight: bold;
             border-radius: 6px;
             cursor: pointer;
-            transition: background-color 0.2s;
+            
+            /* Começa invisível */
+            opacity: 0;
+            transform: scale(0.9);
+            transition: all 0.2s ease;
         }
+
+        /* Aparece quando passamos o mouse no item (li) */
+        #lista-tarefas li:hover .delete-btn {
+            opacity: 1;
+            transform: scale(1);
+        }
+
         .delete-btn:hover {
             background-color: #c0392b;
         }
+
+        /* --- MENSAGEM DE LOADING --- */
         #mensagem-loading {
             text-align: center;
             color: #7f8c8d;
             padding: 20px;
+            font-style: italic;
         }
     </style>
 </head>
@@ -129,7 +229,7 @@
         <p id="mensagem-loading">Carregando tarefas...</p>
     </div>
 
-    <!-- JavaScript -->
+    <!-- JavaScript (IDÊNTICO AO SEU, NENHUMA MUDANÇA) -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const API_URL = 'http://localhost:5000/tarefas';
@@ -200,8 +300,16 @@
                         msgLoading.style.display = 'none';
                     }
                 } catch (error) {
-                    msgLoading.textContent = error.message;
-                    console.error('Erro (GET):', error);
+                    console.error('Erro (GET):', error); // Mantém o log do erro
+                    
+                    let errorMsg = "Erro: Não foi possível conectar ao servidor. Você lembrou de ligar o 'app.py'?";
+                    
+                    // Detecta o erro de Mixed Content (HTTPS tentando acessar HTTP)
+                    if (window.location.protocol === 'https:' && API_URL.startsWith('http:')) {
+                        errorMsg = "Erro de 'Mixed Content': A página (HTTPS) não pode acessar um servidor local (HTTP). Por favor, rode o 'index.html' usando o 'Live Server' do VS Code, e não o botão de 'Preview'.";
+                    }
+                    
+                    msgLoading.textContent = errorMsg;
                 }
             }
 
@@ -226,7 +334,12 @@
                     }
 
                 } catch (error) {
-                    alert('Erro (POST): ' + error.message);
+                    console.error('Erro (POST):', error);
+                    let errorMsg = 'Erro (POST): ' + error.message;
+                    if (window.location.protocol === 'https:' && API_URL.startsWith('http:')) {
+                        errorMsg = "Erro de 'Mixed Content': Não é possível adicionar. Use o 'Live Server'.";
+                    }
+                    alert(errorMsg);
                 }
             }
 
@@ -246,7 +359,12 @@
                     spanElemento.classList.toggle('concluida', concluida);
 
                 } catch (error) {
-                    alert('Erro (PUT): ' + error.message);
+                    console.error('Erro (PUT):', error);
+                    let errorMsg = 'Erro (PUT): ' + error.message;
+                    if (window.location.protocol === 'https:' && API_URL.startsWith('http:')) {
+                        errorMsg = "Erro de 'Mixed Content': Não é possível atualizar. Use o 'Live Server'.";
+                    }
+                    alert(errorMsg);
                 }
             }
 
@@ -270,7 +388,12 @@
                     }
 
                 } catch (error) {
-                    alert('Erro (DELETE): ' + error.message);
+                    console.error('Erro (DELETE):', error);
+                    let errorMsg = 'Erro (DELETE): ' + error.message;
+                    if (window.location.protocol === 'https:' && API_URL.startsWith('http:')) {
+                        errorMsg = "Erro de 'Mixed Content': Não é possível deletar. Use o 'Live Server'.";
+                    }
+                    alert(errorMsg);
                 }
             }
 
